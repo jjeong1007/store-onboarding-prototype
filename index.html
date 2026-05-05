@@ -426,21 +426,84 @@
       position: relative;
     }
 
+    .swipe-card-stack {
+      position: relative;
+      width: 300px;
+      height: 420px;
+    }
+
     .swipe-card {
       width: 300px;
       height: 420px;
       background: #f7f7f7;
       border-radius: 16px;
       overflow: hidden;
-      position: relative;
+      position: absolute;
+      top: 0;
+      left: 0;
       touch-action: none;
       cursor: grab;
-      transition: transform 0.3s ease;
       box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      user-select: none;
+      will-change: transform;
     }
 
     .swipe-card:active {
       cursor: grabbing;
+    }
+
+    .swipe-card.dragging {
+      transition: none !important;
+    }
+
+    .swipe-card.animating {
+      transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+
+    .swipe-card.entering {
+      animation: cardEnter 0.3s ease both;
+    }
+
+    @keyframes cardEnter {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Next card peeking behind */
+    .swipe-card.next-card {
+      transform: scale(0.95) translateY(12px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      pointer-events: none;
+      transition: transform 0.3s ease;
+    }
+
+    /* Swipe overlay labels */
+    .swipe-label {
+      position: absolute;
+      top: 28px;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+      transition: opacity 0.1s ease;
+    }
+
+    .swipe-label.like {
+      right: 20px;
+      color: #2e7d32;
+      border: 3px solid #2e7d32;
+      transform: rotate(12deg);
+    }
+
+    .swipe-label.nope {
+      left: 20px;
+      color: #e53935;
+      border: 3px solid #e53935;
+      transform: rotate(-12deg);
     }
 
     .swipe-card img {
@@ -767,19 +830,6 @@
 
     @keyframes blink {
       50% { border-color: transparent; }
-    }
-
-    /* Screen transition for swipe */
-    .swipe-card.swiped-right {
-      transform: translateX(400px) rotate(20deg);
-      opacity: 0;
-      transition: all 0.4s ease;
-    }
-
-    .swipe-card.swiped-left {
-      transform: translateX(-400px) rotate(-20deg);
-      opacity: 0;
-      transition: all 0.4s ease;
     }
 
     /* Confirmation screens */
@@ -1172,12 +1222,14 @@
       <p class="subtitle" style="font-size: 14px;">Swipe through each of these designs so we can understand what kind of style you'd like.</p>
     </div>
     <div class="swipe-area">
-      <div class="swipe-card" id="swipe-card">
-        <div class="design-placeholder" id="design-placeholder">
-          <div class="design-circle"></div>
-          <div class="design-block"></div>
-          <div class="design-block accent"></div>
-          <div class="design-block" style="width: 140px;"></div>
+      <div class="swipe-card-stack">
+        <div class="swipe-card next-card" id="swipe-card-next">
+          <div class="design-placeholder" id="design-placeholder-next"></div>
+        </div>
+        <div class="swipe-card" id="swipe-card">
+          <div class="swipe-label like">LIKE</div>
+          <div class="swipe-label nope">NOPE</div>
+          <div class="design-placeholder" id="design-placeholder"></div>
         </div>
       </div>
       <div class="swipe-counter" id="swipe-counter">1 of 5</div>
@@ -1520,6 +1572,10 @@
   let swipeCount = 0;
   const totalSwipes = 5;
   let likedStyles = [];
+  let isDragging = false;
+  let startX = 0, startY = 0, currentX = 0;
+  const SWIPE_THRESHOLD = 100;
+
   const designStyles = [
     { bg: '#f3e5f5', accent: '#ce93d8', text: 'Minimal & Elegant' },
     { bg: '#e3f2fd', accent: '#64b5f6', text: 'Modern & Bold' },
@@ -1528,19 +1584,7 @@
     { bg: '#fce4ec', accent: '#f48fb1', text: 'Playful & Fun' },
   ];
 
-  function updateDesignCard() {
-    if (swipeCount >= totalSwipes) {
-      goToScreen('screen-generating-style');
-      // Update summary with liked styles
-      const likedText = likedStyles.length > 0 ? likedStyles.join(', ') : 'None selected';
-      document.getElementById('summary-liked-styles').innerHTML = 'Liked styles: <strong>' + likedText + '</strong>';
-      setTimeout(() => goToScreen('screen-style-confirmed'), 3000);
-      return;
-    }
-    const style = designStyles[swipeCount];
-    const card = document.getElementById('swipe-card');
-    const placeholder = document.getElementById('design-placeholder');
-    card.className = 'swipe-card';
+  function renderCardContent(placeholder, style) {
     placeholder.innerHTML = `
       <div class="design-circle" style="background: ${style.accent}"></div>
       <div class="design-block" style="background: ${style.accent}; opacity: 0.5"></div>
@@ -1548,26 +1592,144 @@
       <div class="design-block" style="width: 140px; background: ${style.accent}; opacity: 0.3"></div>
       <div style="font-weight: 600; color: #616161; margin-top: 8px;">${style.text}</div>
     `;
-    card.style.background = style.bg;
-    document.getElementById('swipe-counter').textContent = `${swipeCount + 1} of ${totalSwipes}`;
   }
 
-  function swipeCard(direction) {
+  function updateDesignCard() {
+    if (swipeCount >= totalSwipes) {
+      goToScreen('screen-generating-style');
+      const likedText = likedStyles.length > 0 ? likedStyles.join(', ') : 'None selected';
+      document.getElementById('summary-liked-styles').innerHTML = 'Liked styles: <strong>' + likedText + '</strong>';
+      setTimeout(() => goToScreen('screen-style-confirmed'), 3000);
+      return;
+    }
+
     const card = document.getElementById('swipe-card');
-    card.classList.add(direction === 'right' ? 'swiped-right' : 'swiped-left');
+    const placeholder = document.getElementById('design-placeholder');
+    const nextCard = document.getElementById('swipe-card-next');
+    const nextPlaceholder = document.getElementById('design-placeholder-next');
+
+    // Current card
+    const style = designStyles[swipeCount];
+    renderCardContent(placeholder, style);
+    card.style.background = style.bg;
+    card.style.transform = '';
+    card.style.opacity = '1';
+    card.className = 'swipe-card entering';
+
+    // Reset labels
+    card.querySelector('.swipe-label.like').style.opacity = '0';
+    card.querySelector('.swipe-label.nope').style.opacity = '0';
+
+    // Next card preview
+    if (swipeCount + 1 < totalSwipes) {
+      const nextStyle = designStyles[swipeCount + 1];
+      renderCardContent(nextPlaceholder, nextStyle);
+      nextCard.style.background = nextStyle.bg;
+      nextCard.style.display = '';
+      nextCard.className = 'swipe-card next-card';
+    } else {
+      nextCard.style.display = 'none';
+    }
+
+    document.getElementById('swipe-counter').textContent = `${swipeCount + 1} of ${totalSwipes}`;
+    bindDragEvents(card);
+  }
+
+  function bindDragEvents(card) {
+    // Remove old listeners by replacing node
+    const newCard = card.cloneNode(true);
+    card.parentNode.replaceChild(newCard, card);
+
+    const onStart = (e) => {
+      isDragging = true;
+      const point = e.touches ? e.touches[0] : e;
+      startX = point.clientX;
+      startY = point.clientY;
+      currentX = 0;
+      newCard.classList.remove('entering');
+      newCard.classList.add('dragging');
+    };
+
+    const onMove = (e) => {
+      if (!isDragging) return;
+      const point = e.touches ? e.touches[0] : e;
+      currentX = point.clientX - startX;
+      const rotation = currentX * 0.08;
+      newCard.style.transform = `translateX(${currentX}px) rotate(${rotation}deg)`;
+
+      // Show labels based on drag direction
+      const likeLabel = newCard.querySelector('.swipe-label.like');
+      const nopeLabel = newCard.querySelector('.swipe-label.nope');
+      const progress = Math.min(Math.abs(currentX) / SWIPE_THRESHOLD, 1);
+
+      if (currentX > 0) {
+        likeLabel.style.opacity = progress;
+        nopeLabel.style.opacity = '0';
+      } else {
+        nopeLabel.style.opacity = progress;
+        likeLabel.style.opacity = '0';
+      }
+
+      // Scale up next card as you drag
+      const nextCard = document.getElementById('swipe-card-next');
+      const scale = 0.95 + (0.05 * progress);
+      const translateY = 12 - (12 * progress);
+      nextCard.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      newCard.classList.remove('dragging');
+
+      if (Math.abs(currentX) > SWIPE_THRESHOLD) {
+        // Swipe completed
+        const direction = currentX > 0 ? 'right' : 'left';
+        completeSwipe(newCard, direction);
+      } else {
+        // Snap back
+        newCard.classList.add('animating');
+        newCard.style.transform = 'translateX(0) rotate(0)';
+        newCard.querySelector('.swipe-label.like').style.opacity = '0';
+        newCard.querySelector('.swipe-label.nope').style.opacity = '0';
+        // Reset next card
+        const nextCard = document.getElementById('swipe-card-next');
+        nextCard.style.transform = '';
+        nextCard.className = 'swipe-card next-card';
+        setTimeout(() => newCard.classList.remove('animating'), 300);
+      }
+    };
+
+    newCard.addEventListener('mousedown', onStart);
+    newCard.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: true });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+  }
+
+  function completeSwipe(card, direction) {
+    const flyX = direction === 'right' ? 500 : -500;
+    const flyRotation = direction === 'right' ? 30 : -30;
+
+    card.classList.add('animating');
+    card.style.transform = `translateX(${flyX}px) rotate(${flyRotation}deg)`;
+    card.style.opacity = '0';
+
     if (direction === 'right') {
       likedStyles.push(designStyles[swipeCount].text);
     }
     swipeCount++;
+
     setTimeout(() => {
-      card.style.transition = 'none';
-      card.style.transform = 'translateX(0) rotate(0)';
-      card.style.opacity = '1';
-      card.className = 'swipe-card';
-      void card.offsetWidth;
-      card.style.transition = '';
       updateDesignCard();
     }, 400);
+  }
+
+  function swipeCard(direction) {
+    // Button-triggered swipe
+    const card = document.getElementById('swipe-card');
+    completeSwipe(card, direction);
   }
 
   // Initialize first design card
