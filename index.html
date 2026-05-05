@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopify Onboarding Prototype</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .phone-frame {
+      width: 390px;
+      height: 844px;
+      background: #fff;
+      border-radius: 40px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: #fff;
+      flex-direction: column;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Status bar */
+    .status-bar {
+      height: 54px;
+      padding: 14px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .status-bar-time {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .status-bar-icons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .status-bar-icons span {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Back button */
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 24px 8px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      color: #008060;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+    }
+
+    .back-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      padding: 0 24px;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: #e3e3e3;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #008060;
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+
+    /* Typography */
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a1a;
+      line-height: 1.2;
+      letter-spacing: -0.3px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      line-height: 1.2;
+      letter-spacing: -0.2px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: #616161;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    /* Content area */
+    .content {
+      flex: 1;
+      padding: 0 24px;
+      overflow-y: auto;
+    }
+
+    .content-header {
+      padding-top: 16px;
+      padding-bottom: 24px;
+    }
+
+    /* Option cards */
+    .option-card {
+      background: #f7f7f7;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 15px;
+      color: #1a1a1a;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .option-card:hover {
+      background: #f0f0f0;
+      border-color: #d0d0d0;
+    }
+
+    .option-card:active, .option-card.selected {
+      background: #e8f5e9;
+      border-color: #008060;
+    }
+
+    /* Chips */
+    .question-group {
+      margin-bottom: 28px;
+      animation: fadeInUp 0.4s ease both;
+    }
+
+    .question-group:nth-child(2) { animation-delay: 0.1s; }
+    .question-group:nth-child(3) { animation-delay: 0.2s; }
+    .question-group:nth-child(4) { animation-delay: 0.3s; }
+
+    .question-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: #f7f7f7;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 14px;
+      color: #1a1a1a;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      font-weight: 500;
+    }
+
+    .chip:hover {
+      background: #ebebeb;
+    }
+
+    .chip.selected {
+      background: #e8f5e9;
+      border-color: #008060;
+      color: #008060;
+    }
+
+    /* Text input area */
+    .text-input-area {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 24px;
+      padding-bottom: 34px;
+      background: #fff;
+      border-top: 1px solid #e3e3e3;
+    }
+
+    .text-input-wrapper {
+      background: #f7f7f7;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      min-height: 48px;
+    }
+
+    .text-input-wrapper textarea {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      color: #1a1a1a;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      line-height: 1.4;
+    }
+
+    .text-input-wrapper textarea::placeholder {
+      color: #999;
+    }
+
+    .send-btn {
+      width: 32px;
+      height: 32px;
+      background: #008060;
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .send-btn:hover {
+      background: #006e52;
+    }
+
+    .send-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: white;
+    }
+
+    /* Primary button */
+    .btn-primary {
+      width: 100%;
+      background: #008060;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: #006e52;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      background: #f7f7f7;
+      color: #1a1a1a;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #ebebeb;
+    }
+
+    /* Bottom action */
+    .bottom-action {
+      padding: 16px 24px;
+      padding-bottom: 40px;
+      flex-shrink: 0;
+    }
+
+    /* Loading dots */
+    .loading-dots {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      padding: 40px 0;
+    }
+
+    .loading-dot {
+      width: 10px;
+      height: 10px;
+      background: #008060;
+      border-radius: 50%;
+      animation: dotPulse 1.4s infinite ease-in-out;
+    }
+
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotPulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Checklist */
+    .checklist {
+      list-style: none;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 0;
+      font-size: 15px;
+      color: #1a1a1a;
+      animation: fadeInUp 0.4s ease both;
+    }
+
+    .checklist-item:nth-child(1) { animation-delay: 0.1s; }
+    .checklist-item:nth-child(2) { animation-delay: 0.3s; }
+    .checklist-item:nth-child(3) { animation-delay: 0.5s; }
+    .checklist-item:nth-child(4) { animation-delay: 0.7s; }
+    .checklist-item:nth-child(5) { animation-delay: 0.9s; }
+    .checklist-item:nth-child(6) { animation-delay: 1.1s; }
+    .checklist-item:nth-child(7) { animation-delay: 1.3s; }
+
+    .check-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .check-icon.done {
+      background: #008060;
+    }
+
+    .check-icon.done svg {
+      width: 14px;
+      height: 14px;
+      fill: white;
+    }
+
+    .check-icon.pending {
+      border: 2px solid #d0d0d0;
+      background: white;
+    }
+
+    .check-icon.loading {
+      border: 2px solid #008060;
+      border-top-color: transparent;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Tinder card */
+    .swipe-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      position: relative;
+    }
+
+    .swipe-card {
+      width: 300px;
+      height: 420px;
+      background: #f7f7f7;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      touch-action: none;
+      cursor: grab;
+      transition: transform 0.3s ease;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+
+    .swipe-card:active {
+      cursor: grabbing;
+    }
+
+    .swipe-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .swipe-card .design-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      font-size: 15px;
+      color: #999;
+    }
+
+    .swipe-card .design-placeholder .design-block {
+      width: 200px;
+      height: 40px;
+      background: #e8e8e8;
+      border-radius: 8px;
+    }
+
+    .swipe-card .design-placeholder .design-block.accent {
+      background: #c8e6c9;
+      width: 160px;
+    }
+
+    .swipe-card .design-placeholder .design-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #e0e0e0;
+    }
+
+    .swipe-actions {
+      display: flex;
+      gap: 40px;
+      padding: 24px 0;
+      justify-content: center;
+    }
+
+    .swipe-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .swipe-btn .icon-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .swipe-btn:hover .icon-circle {
+      transform: scale(1.1);
+    }
+
+    .swipe-btn.dislike .icon-circle {
+      background: #fce4ec;
+    }
+
+    .swipe-btn.like .icon-circle {
+      background: #e8f5e9;
+    }
+
+    .swipe-btn span {
+      font-size: 13px;
+      font-weight: 600;
+      color: #616161;
+    }
+
+    .swipe-counter {
+      font-size: 13px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    /* Upload area */
+    .upload-section {
+      margin-bottom: 24px;
+    }
+
+    .upload-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #616161;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .upload-area {
+      border: 2px dashed #d0d0d0;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 15px;
+      color: #008060;
+      font-weight: 500;
+    }
+
+    .upload-area:hover {
+      border-color: #008060;
+      background: #f0faf6;
+    }
+
+    .upload-area svg {
+      width: 20px;
+      height: 20px;
+      fill: #008060;
+    }
+
+    /* Store preview */
+    .store-preview {
+      background: #f7f7f7;
+      border-radius: 16px;
+      margin: 16px 0;
+      overflow: hidden;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .store-preview-nav {
+      background: #1a1a1a;
+      color: white;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .store-preview-body {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .preview-hero {
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      border-radius: 12px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #2e7d32;
+      font-size: 18px;
+    }
+
+    .preview-products {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .preview-product {
+      background: #e8e8e8;
+      border-radius: 8px;
+      height: 80px;
+    }
+
+    /* Pricing section */
+    .pricing-features {
+      padding: 16px 0;
+    }
+
+    .pricing-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      font-size: 15px;
+      color: #1a1a1a;
+    }
+
+    .pricing-feature .feature-check {
+      width: 20px;
+      height: 20px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .pricing-feature .feature-check svg {
+      width: 12px;
+      height: 12px;
+      fill: #008060;
+    }
+
+    .pricing-box {
+      background: #f7f7f7;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 16px 0;
+    }
+
+    .pricing-trial {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .pricing-trial small {
+      display: block;
+      font-size: 13px;
+      color: #616161;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .pricing-amount {
+      text-align: right;
+    }
+
+    .pricing-amount .price {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .pricing-amount .period {
+      font-size: 13px;
+      color: #616161;
+    }
+
+    .text-link {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .text-link a {
+      color: #008060;
+      text-decoration: underline;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    /* Shopify logo */
+    .shopify-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px;
+    }
+
+    .shopify-logo svg {
+      height: 36px;
+    }
+
+    /* Screen 1 specific - Welcome */
+    .welcome-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .welcome-screen .shopify-bag {
+      width: 80px;
+      height: 80px;
+      background: #96bf48;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+
+    .welcome-screen .shopify-bag svg {
+      width: 40px;
+      height: 40px;
+      fill: white;
+    }
+
+    .welcome-screen h1 {
+      margin-bottom: 12px;
+    }
+
+    .welcome-screen .subtitle {
+      margin-bottom: 40px;
+    }
+
+    /* Typing indicator */
+    .typing-text {
+      display: inline;
+      border-right: 2px solid #1a1a1a;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+
+    /* Screen transition for swipe */
+    .swipe-card.swiped-right {
+      transform: translateX(400px) rotate(20deg);
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+
+    .swipe-card.swiped-left {
+      transform: translateX(-400px) rotate(-20deg);
+      opacity: 0;
+      transition: all 0.4s ease;
+    }
+
+    /* Confirmation screens */
+    .confirmation-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .confirm-icon {
+      width: 72px;
+      height: 72px;
+      background: #e8f5e9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .confirm-icon svg {
+      width: 36px;
+      height: 36px;
+      fill: #008060;
+    }
+
+    .confirm-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      animation: fadeInUp 0.5s ease 0.2s both;
+    }
+
+    .confirm-subtitle {
+      font-size: 15px;
+      color: #616161;
+      line-height: 1.5;
+      max-width: 300px;
+      animation: fadeInUp 0.5s ease 0.35s both;
+    }
+
+    /* Summary page */
+    .summary-section {
+      background: #f7f7f7;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.4s ease both;
+    }
+
+    .summary-section:nth-child(2) { animation-delay: 0.15s; }
+    .summary-section:nth-child(3) { animation-delay: 0.3s; }
+
+    .summary-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .summary-section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .summary-section-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .summary-section-icon.business {
+      background: #e3f2fd;
+    }
+
+    .summary-section-icon.business svg { fill: #1565c0; }
+
+    .summary-section-icon.audience {
+      background: #fff3e0;
+    }
+
+    .summary-section-icon.audience svg { fill: #e65100; }
+
+    .summary-section-icon.style {
+      background: #f3e5f5;
+    }
+
+    .summary-section-icon.style svg { fill: #7b1fa2; }
+
+    .summary-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 14px;
+      color: #303030;
+      line-height: 1.45;
+    }
+
+    .summary-item .summary-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #008060;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .summary-edit-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #008060;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .summary-edit-link:hover {
+      text-decoration: underline;
+    }
+
+    .building-spinner {
+      margin-bottom: 24px;
+      animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Scrollbar styling */
+    .content::-webkit-scrollbar {
+      width: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="phone-frame">
+
+  <!-- Screen 1: Welcome / Let's build your store -->
+  <div class="screen active" id="screen-welcome">
+    <div class="welcome-screen">
+      <div class="shopify-bag">
+        <svg viewBox="0 0 24 24"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.18l6.5 3.64v7.36L12 18.82l-6.5-3.64V7.82L12 4.18z"/><path d="M12 6a2 2 0 00-2 2v2H8v6h8v-6h-2V8a2 2 0 00-2-2zm0 2v2h-0V8z"/></svg>
+      </div>
+      <h1>Let's build your store</h1>
+      <p class="subtitle">We'll guide you through everything step-by-step</p>
+      <div style="width: 100%; padding-top: 20px;">
+        <button class="btn-primary" onclick="goToScreen('screen-experience')">Set up my store</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Experience Level -->
+  <div class="screen" id="screen-experience">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 14%"></div></div>
+    </div>
+    <div class="content">
+      <div class="content-header">
+        <h1>Hi Dorianne</h1>
+        <p class="subtitle">Let's get your store all setup. What describes you best?</p>
+      </div>
+      <div class="option-card" onclick="selectExperience(this, 'new')">I'm completely new to business</div>
+      <div class="option-card" onclick="selectExperience(this, 'vague')">I have a vague idea for a business</div>
+      <div class="option-card" onclick="selectExperience(this, 'solid')">I have a solid idea for a business</div>
+    </div>
+  </div>
+
+  <!-- Screen 3: Describe your business -->
+  <div class="screen" id="screen-describe">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 28%"></div></div>
+    </div>
+    <button class="back-btn" onclick="goToScreen('screen-experience')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <div class="content" style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
+      <div>
+        <h2>Describe your business</h2>
+        <p class="subtitle">Let's flesh out your idea a bit more. What is the idea that you have?</p>
+      </div>
+    </div>
+    <div class="text-input-area">
+      <div class="text-input-wrapper">
+        <textarea id="business-input" rows="2" placeholder="Description of your business..." oninput="autoResize(this)"></textarea>
+        <button class="send-btn" onclick="submitDescription()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 4: Generating follow-up -->
+  <div class="screen" id="screen-generating">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 42%"></div></div>
+    </div>
+    <div class="content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+      <div class="loading-dots">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+      <p style="font-size: 15px; color: #616161; text-align: center; margin-top: 16px;">Generating follow up questions<br>about your business...</p>
+    </div>
+  </div>
+
+  <!-- Screen 5: Follow-up questions -->
+  <div class="screen" id="screen-questions">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+    </div>
+    <button class="back-btn" onclick="goToScreen('screen-describe')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <div class="content" style="padding-bottom: 100px;">
+      <div class="question-group">
+        <div class="question-label">What's your experience level in operating a business?</div>
+        <div class="chips">
+          <div class="chip" onclick="toggleChip(this)">Beginner</div>
+          <div class="chip" onclick="toggleChip(this)">Some experience</div>
+          <div class="chip" onclick="toggleChip(this)">Novice</div>
+          <div class="chip" onclick="toggleChip(this)">Expert</div>
+          <div class="chip" onclick="toggleChip(this)">Other:</div>
+        </div>
+      </div>
+      <div class="question-group">
+        <div class="question-label">Who do you want to sell to?</div>
+        <div class="chips">
+          <div class="chip" onclick="toggleChip(this)">Locally</div>
+          <div class="chip" onclick="toggleChip(this)">Nationally</div>
+          <div class="chip" onclick="toggleChip(this)">Globally</div>
+          <div class="chip" onclick="toggleChip(this)">Other:</div>
+        </div>
+      </div>
+      <div class="question-group">
+        <div class="question-label">What sort of products do you want to sell?</div>
+        <div class="chips">
+          <div class="chip" onclick="toggleChip(this)">Physical products</div>
+          <div class="chip" onclick="toggleChip(this)">Digital products</div>
+          <div class="chip" onclick="toggleChip(this)">Services</div>
+          <div class="chip" onclick="toggleChip(this)">Other:</div>
+        </div>
+      </div>
+      <div class="question-group">
+        <div class="question-label">How many products are you planning to sell?</div>
+        <div class="chips">
+          <div class="chip" onclick="toggleChip(this)">1-5</div>
+          <div class="chip" onclick="toggleChip(this)">6-20</div>
+          <div class="chip" onclick="toggleChip(this)">21-50</div>
+          <div class="chip" onclick="toggleChip(this)">50+</div>
+        </div>
+      </div>
+    </div>
+    <div class="text-input-area">
+      <div class="text-input-wrapper">
+        <textarea rows="1" placeholder="Add more information..." oninput="autoResize(this)"></textarea>
+        <button class="send-btn" onclick="goToScreen('screen-business-confirmed')">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen: Business Confirmed -->
+  <div class="screen" id="screen-business-confirmed">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 55%"></div></div>
+    </div>
+    <div class="confirmation-center">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+      </div>
+      <div class="confirm-title">Got it!</div>
+      <div class="confirm-subtitle">I've learned all about your business. Now let's figure out the look and feel of your brand.</div>
+    </div>
+    <div class="bottom-action">
+      <button class="btn-primary" onclick="goToScreen('screen-stylize')">Continue to styling</button>
+    </div>
+  </div>
+
+  <!-- Screen 6: Stylize Your Business -->
+  <div class="screen" id="screen-stylize">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 64%"></div></div>
+    </div>
+    <button class="back-btn" onclick="goToScreen('screen-questions')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <div class="content">
+      <div class="content-header">
+        <h2>Stylize Your Business</h2>
+        <p class="subtitle">Now that I know a bit more about your business, tell me about the style of your branding.</p>
+      </div>
+      <div class="option-card" onclick="selectStyle(this, 'none')">I have no idea what kind of style I want</div>
+      <div class="option-card" onclick="selectStyle(this, 'general')">I have a general idea of the style I want</div>
+      <div class="option-card" onclick="selectStyle(this, 'brand')">I know my brand</div>
+    </div>
+  </div>
+
+  <!-- Screen 7: Upload inspiration -->
+  <div class="screen" id="screen-upload">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 72%"></div></div>
+    </div>
+    <button class="back-btn" onclick="goToScreen('screen-stylize')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <div class="content">
+      <div class="content-header">
+        <h2>Stylize Your Business</h2>
+        <p class="subtitle">Do you have any inspiration that you'd like to share?</p>
+      </div>
+      <div class="upload-section">
+        <div class="upload-label">Inspiration</div>
+        <div class="upload-area" onclick="simulateUpload(this)">
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+          Upload Image
+        </div>
+      </div>
+    </div>
+    <div class="bottom-action">
+      <button class="btn-primary" onclick="handleUploadContinue()">Continue</button>
+    </div>
+  </div>
+
+  <!-- Screen 8: Swipe designs (Tinder-style) -->
+  <div class="screen" id="screen-swipe">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 78%"></div></div>
+    </div>
+    <div class="content" style="padding-top: 12px;">
+      <h2>Stylize Your Business</h2>
+      <p class="subtitle" style="font-size: 14px;">Swipe through each of these designs so we can understand what kind of style you'd like.</p>
+    </div>
+    <div class="swipe-area">
+      <div class="swipe-card" id="swipe-card">
+        <div class="design-placeholder" id="design-placeholder">
+          <div class="design-circle"></div>
+          <div class="design-block"></div>
+          <div class="design-block accent"></div>
+          <div class="design-block" style="width: 140px;"></div>
+        </div>
+      </div>
+      <div class="swipe-counter" id="swipe-counter">1 of 5</div>
+      <div class="swipe-actions">
+        <button class="swipe-btn dislike" onclick="swipeCard('left')">
+          <div class="icon-circle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+          <span>Not for me</span>
+        </button>
+        <button class="swipe-btn like" onclick="swipeCard('right')">
+          <div class="icon-circle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <span>Love it!</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 9: Generating design styles -->
+  <div class="screen" id="screen-generating-style">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 85%"></div></div>
+    </div>
+    <div class="content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+      <h2 style="text-align: center;">Stylize Your Business</h2>
+      <p style="font-size: 15px; color: #616161; text-align: center; margin-top: 12px;">Generating design styles you may like...</p>
+      <div class="loading-dots" style="margin-top: 32px;">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen: Style Confirmed -->
+  <div class="screen" id="screen-style-confirmed">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 88%"></div></div>
+    </div>
+    <div class="confirmation-center">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      </div>
+      <div class="confirm-title">Style locked in!</div>
+      <div class="confirm-subtitle">I now have a great sense of the style and branding you're going for. Let me show you what I've learned.</div>
+    </div>
+    <div class="bottom-action">
+      <button class="btn-primary" onclick="goToScreen('screen-summary')">See your profile</button>
+    </div>
+  </div>
+
+  <!-- Screen: Summary of what AI learned -->
+  <div class="screen" id="screen-summary">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 90%"></div></div>
+    </div>
+    <div class="content" style="padding-bottom: 16px;">
+      <div class="content-header">
+        <h1>Here's what I learned</h1>
+        <p class="subtitle">Review the details below. If everything looks good, I'll start building your store.</p>
+      </div>
+
+      <div class="summary-section">
+        <div class="summary-section-header">
+          <div class="summary-section-icon business">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+          </div>
+          <div class="summary-section-title">Your Business</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span id="summary-description">A cookie business selling different types of cookies, driven by a passion for baking</span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span id="summary-experience">Experience level: <strong>Beginner</strong></span>
+        </div>
+        <a class="summary-edit-link" onclick="goToScreen('screen-describe')">Edit business details</a>
+      </div>
+
+      <div class="summary-section">
+        <div class="summary-section-header">
+          <div class="summary-section-icon audience">
+            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          </div>
+          <div class="summary-section-title">Target Audience</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span id="summary-audience">Selling <strong>locally</strong> to start</span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span id="summary-products">Focused on <strong>physical products</strong></span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span id="summary-count">Starting with <strong>1-5 products</strong></span>
+        </div>
+        <a class="summary-edit-link" onclick="goToScreen('screen-questions')">Edit audience details</a>
+      </div>
+
+      <div class="summary-section">
+        <div class="summary-section-header">
+          <div class="summary-section-icon style">
+            <svg viewBox="0 0 24 24"><path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0112 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 00-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 012.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></svg>
+          </div>
+          <div class="summary-section-title">Brand Style</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span id="summary-style-pref">Style preference: <strong>Exploring options</strong></span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span id="summary-liked-styles">Liked styles: <strong>Warm & Organic, Fresh & Natural</strong></span>
+        </div>
+        <div class="summary-item">
+          <div class="summary-dot"></div>
+          <span>Tone: <strong>Friendly, approachable, artisanal</strong></span>
+        </div>
+        <a class="summary-edit-link" onclick="goToScreen('screen-stylize')">Edit style preferences</a>
+      </div>
+    </div>
+    <div class="bottom-action">
+      <button class="btn-primary" onclick="goToScreen('screen-setup')">Looks good, build my store!</button>
+      <div class="text-link" style="margin-top: 12px;">
+        <a onclick="goToScreen('screen-describe')">Start over</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 10: Building your store (loading) -->
+  <div class="screen" id="screen-setup">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" id="building-progress" style="width: 92%"></div></div>
+    </div>
+    <div class="confirmation-center">
+      <div class="building-spinner" id="building-spinner">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="28" fill="none" stroke="#e3e3e3" stroke-width="4"/>
+          <circle cx="32" cy="32" r="28" fill="none" stroke="#008060" stroke-width="4" stroke-dasharray="120 60" stroke-linecap="round" style="animation: spin 1.2s linear infinite; transform-origin: center;"/>
+        </svg>
+      </div>
+      <div class="confirm-title" style="animation-delay: 0s;">Building your store...</div>
+      <div class="confirm-subtitle" style="animation-delay: 0s;" id="building-status">Hang tight! Sidekick is setting everything up for you.</div>
+    </div>
+  </div>
+
+  <!-- Screen 11: Your store is ready -->
+  <div class="screen" id="screen-ready">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+    </div>
+    <div class="content">
+      <div class="content-header">
+        <h1>Your store is ready!</h1>
+        <p class="subtitle">Here's a preview of your store. Make any changes and publish when you're ready.</p>
+      </div>
+      <div class="store-preview">
+        <div class="store-preview-nav">
+          <span>My Store</span>
+          <span style="font-size: 11px; opacity: 0.6;">Preview</span>
+        </div>
+        <div class="store-preview-body">
+          <div class="preview-hero">Your Store Name</div>
+          <div class="preview-products">
+            <div class="preview-product"></div>
+            <div class="preview-product"></div>
+            <div class="preview-product"></div>
+            <div class="preview-product"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-action">
+      <button class="btn-primary" onclick="goToScreen('screen-golive')">Publish your store</button>
+    </div>
+  </div>
+
+  <!-- Screen 12: Go Live -->
+  <div class="screen" id="screen-golive">
+    <div class="status-bar">
+      <span class="status-bar-time">9:41</span>
+      <div class="status-bar-icons"><span>5G</span></div>
+    </div>
+    <button class="back-btn" onclick="goToScreen('screen-ready')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <div class="content">
+      <div class="content-header">
+        <h1>Go live with your store</h1>
+        <p class="subtitle">Start your free trial to publish your store and start selling</p>
+      </div>
+      <div class="pricing-features">
+        <div class="pricing-feature">
+          <div class="feature-check">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          Publish your store and make it live
+        </div>
+        <div class="pricing-feature">
+          <div class="feature-check">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          Accept secure payments
+        </div>
+        <div class="pricing-feature">
+          <div class="feature-check">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          Access analytics and grow your business
+        </div>
+      </div>
+      <div class="pricing-box">
+        <div class="pricing-trial">
+          3-day free trial
+          <small>Then $1/month</small>
+        </div>
+        <div class="pricing-amount">
+          <span class="price">$1</span>
+          <span class="period">/month</span>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-action">
+      <button class="btn-primary" onclick="alert('Trial started! Redirecting to your new store...')">Start free trial</button>
+      <div class="text-link" style="margin-top: 16px;">
+        <a onclick="goToScreen('screen-welcome')">Save and finish later</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Navigation
+  function goToScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+
+    // Trigger building animation
+    if (screenId === 'screen-setup') {
+      animateBuildingStore();
+    }
+  }
+
+  // Experience selection
+  function selectExperience(el, type) {
+    document.querySelectorAll('#screen-experience .option-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    setTimeout(() => goToScreen('screen-describe'), 400);
+  }
+
+  // Style selection
+  let selectedStyleType = '';
+  function selectStyle(el, type) {
+    selectedStyleType = type;
+    document.querySelectorAll('#screen-stylize .option-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    // Update summary
+    const labels = { none: 'No existing style — exploring from scratch', general: 'Has a general idea of desired style', brand: 'Has established brand identity' };
+    document.getElementById('summary-style-pref').innerHTML = 'Style preference: <strong>' + labels[type] + '</strong>';
+    setTimeout(() => {
+      if (type === 'brand') {
+        goToScreen('screen-upload');
+      } else if (type === 'general') {
+        goToScreen('screen-upload');
+      } else {
+        goToScreen('screen-swipe');
+      }
+    }, 400);
+  }
+
+  // Upload continue — "know my brand" skips swipe, others go to swipe
+  function handleUploadContinue() {
+    if (selectedStyleType === 'brand') {
+      goToScreen('screen-generating-style');
+      setTimeout(() => goToScreen('screen-style-confirmed'), 3000);
+    } else {
+      goToScreen('screen-swipe');
+    }
+  }
+
+  // Chip toggle
+  function toggleChip(el) {
+    el.classList.toggle('selected');
+  }
+
+  // Auto resize textarea
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  // Submit description
+  function submitDescription() {
+    const input = document.getElementById('business-input');
+    if (input.value.trim() === '') {
+      input.value = "I'm thinking of opening a cookie business to sell different types of cookies because I just like to bake.";
+    }
+    // Update summary with actual description
+    document.getElementById('summary-description').textContent = input.value;
+    goToScreen('screen-generating');
+    setTimeout(() => goToScreen('screen-questions'), 2500);
+  }
+
+  // Simulate upload
+  function simulateUpload(el) {
+    el.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="#008060"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Image uploaded';
+    el.style.borderColor = '#008060';
+    el.style.color = '#008060';
+    el.style.background = '#f0faf6';
+  }
+
+  // Swipe card logic
+  let swipeCount = 0;
+  const totalSwipes = 5;
+  let likedStyles = [];
+  const designStyles = [
+    { bg: '#f3e5f5', accent: '#ce93d8', text: 'Minimal & Elegant' },
+    { bg: '#e3f2fd', accent: '#64b5f6', text: 'Modern & Bold' },
+    { bg: '#fff3e0', accent: '#ffb74d', text: 'Warm & Organic' },
+    { bg: '#e8f5e9', accent: '#81c784', text: 'Fresh & Natural' },
+    { bg: '#fce4ec', accent: '#f48fb1', text: 'Playful & Fun' },
+  ];
+
+  function updateDesignCard() {
+    if (swipeCount >= totalSwipes) {
+      goToScreen('screen-generating-style');
+      // Update summary with liked styles
+      const likedText = likedStyles.length > 0 ? likedStyles.join(', ') : 'None selected';
+      document.getElementById('summary-liked-styles').innerHTML = 'Liked styles: <strong>' + likedText + '</strong>';
+      setTimeout(() => goToScreen('screen-style-confirmed'), 3000);
+      return;
+    }
+    const style = designStyles[swipeCount];
+    const card = document.getElementById('swipe-card');
+    const placeholder = document.getElementById('design-placeholder');
+    card.className = 'swipe-card';
+    placeholder.innerHTML = `
+      <div class="design-circle" style="background: ${style.accent}"></div>
+      <div class="design-block" style="background: ${style.accent}; opacity: 0.5"></div>
+      <div class="design-block accent" style="background: ${style.accent}"></div>
+      <div class="design-block" style="width: 140px; background: ${style.accent}; opacity: 0.3"></div>
+      <div style="font-weight: 600; color: #616161; margin-top: 8px;">${style.text}</div>
+    `;
+    card.style.background = style.bg;
+    document.getElementById('swipe-counter').textContent = `${swipeCount + 1} of ${totalSwipes}`;
+  }
+
+  function swipeCard(direction) {
+    const card = document.getElementById('swipe-card');
+    card.classList.add(direction === 'right' ? 'swiped-right' : 'swiped-left');
+    if (direction === 'right') {
+      likedStyles.push(designStyles[swipeCount].text);
+    }
+    swipeCount++;
+    setTimeout(() => {
+      card.style.transition = 'none';
+      card.style.transform = 'translateX(0) rotate(0)';
+      card.style.opacity = '1';
+      card.className = 'swipe-card';
+      void card.offsetWidth;
+      card.style.transition = '';
+      updateDesignCard();
+    }, 400);
+  }
+
+  // Initialize first design card
+  updateDesignCard();
+
+  // Animate building store
+  function animateBuildingStore() {
+    const statusEl = document.getElementById('building-status');
+    const progressEl = document.getElementById('building-progress');
+    const steps = [
+      { text: 'Adding your first product...', progress: '93%' },
+      { text: 'Customizing your online store...', progress: '95%' },
+      { text: 'Setting up payments...', progress: '97%' },
+      { text: 'Final touches...', progress: '99%' },
+    ];
+
+    steps.forEach((step, i) => {
+      setTimeout(() => {
+        statusEl.textContent = step.text;
+        progressEl.style.width = step.progress;
+      }, (i + 1) * 1000);
+    });
+
+    setTimeout(() => {
+      progressEl.style.width = '100%';
+      goToScreen('screen-ready');
+    }, 5000);
+  }
+</script>
+
+</body>
+</html>
